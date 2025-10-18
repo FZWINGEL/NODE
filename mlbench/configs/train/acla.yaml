@@ -1,0 +1,34 @@
+# ACLA training configuration based on paper specifications
+train:
+  epochs: 1000
+  batch_size: 1  # As specified in paper
+  learning_rate: 0.01
+  optimizer: "adamw"
+  scheduler: "cosine"
+  
+  # Three-phase training protocol from paper:
+  # 1. Linear warm-up for 220 iterations
+  # 2. Stabilization for 500 iterations  
+  # 3. Decay phase for 280 iterations
+  warmup_epochs: 220
+  plateau_epochs: 500
+  decay_epochs: 280
+  
+  # Lookahead optimizer settings
+  lookahead:
+    enabled: true
+    sync_period: 5
+    slow_weight_update_rate: 0.5
+    
+  # Early stopping
+  early_stopping:
+    patience: 50
+    min_delta: 1e-6
+    
+  # Logging
+  log_interval: 10
+  save_interval: 100
+  
+  # Model checkpointing
+  save_best: true
+  save_last: true

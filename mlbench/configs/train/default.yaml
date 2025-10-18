@@ -1,0 +1,9 @@
+﻿model: lstm
+train:
+  epochs: 10
+  lr: 1e-3
+  batch_size: 32
+  optimizer: adamw
+
+data:
+  name: dummy

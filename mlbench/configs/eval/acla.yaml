@@ -1,0 +1,19 @@
+# ACLA evaluation configuration
+eval:
+  metrics:
+    - "mse"
+    - "mae" 
+    - "rmse"
+    - "mape"
+    
+  # Evaluation settings
+  batch_size: 32
+  num_workers: 4
+  
+  # Visualization
+  plot_predictions: true
+  plot_trajectories: true
+  
+  # Save results
+  save_predictions: true
+  save_metrics: true

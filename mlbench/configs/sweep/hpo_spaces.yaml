@@ -1,0 +1,144 @@
+lstm:
+  model:
+    input_dim:
+      type: choice
+      values: [16, 20]
+    hidden_dim:
+      type: choice
+      values: [32, 64, 128, 256]
+    num_layers:
+      type: int
+      low: 1
+      high: 5
+  train:
+    lr:
+      type: loguniform
+      low: 3.0e-4
+      high: 3.0e-3
+    batch_size:
+      type: choice
+      values: [16, 32, 64, 128]
+
+pcrnn:
+  model:
+    input_dim:
+      type: choice
+      values: [16, 20]
+    state_dim:
+      type: choice
+      values: [16, 32, 64, 128]
+    hidden:
+      type: choice
+      values: [64, 128, 256]
+    layers:
+      type: int
+      low: 1
+      high: 3
+  train:
+    lr:
+      type: loguniform
+      low: 3.0e-4
+      high: 3.0e-3
+    batch_size:
+      type: choice
+      values: [16, 32, 64]
+
+node:
+  model:
+    input_dim:
+      type: choice
+      values: [16, 20]
+    state_dim:
+      type: choice
+      values: [16, 32, 64]
+    hidden:
+      type: choice
+      values: [32, 64, 128]
+    layers:
+      type: int
+      low: 1
+      high: 3
+  train:
+    lr:
+      type: loguniform
+      low: 1.0e-4
+      high: 1.0e-3
+    batch_size:
+      type: choice
+      values: [16, 32, 64]
+
+anode:
+  model:
+    input_dim:
+      type: choice
+      values: [16, 20]
+    state_dim:
+      type: choice
+      values: [16, 32, 64]
+    aug_dim:
+      type: choice
+      values: [8, 16, 32]
+    hidden:
+      type: choice
+      values: [32, 64, 128]
+    layers:
+      type: int
+      low: 1
+      high: 3
+  train:
+    lr:
+      type: loguniform
+      low: 1.0e-4
+      high: 1.0e-3
+    batch_size:
+      type: choice
+      values: [16, 32, 64]
+
+ude_charm:
+  model:
+    input_dim:
+      type: choice
+      values: [16, 20]
+    dim:
+      type: choice
+      values: [6, 8, 10]
+  train:
+    lr:
+      type: loguniform
+      low: 1.0e-4
+      high: 1.0e-3
+    batch_size:
+      type: choice
+      values: [16, 32, 64]
+
+acla:
+  model:
+    input_dim:
+      type: choice
+      values: [16, 20]
+    attention_dim:
+      type: choice
+      values: [8, 10, 12]
+    attention_width:
+      type: choice
+      values: [3, 5, 7]
+    cnn_hidden_dim:
+      type: choice
+      values: [32, 64, 128]
+    lstm_hidden_dim:
+      type: choice
+      values: [32, 64, 128]
+    state_dim:
+      type: choice
+      values: [32, 64, 128]
+    aug_dim:
+      type: choice
+      values: [16, 20, 24]
+  train:
+    lr:
+      type: loguniform
+      low: 1.0e-3
+      high: 1.0e-2
+    batch_size:
+      type: choice
+      values: [1, 2, 4]  # Small batch sizes as per paper

@@ -1,0 +1,7 @@
+﻿model: node
+variants:
+  - model=node
+  - model=anode
+  - model=pcrnn
+  - model=lstm
+  - model=ude_charm

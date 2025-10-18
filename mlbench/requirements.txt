@@ -1,0 +1,16 @@
+﻿torch==2.1.0+cu121
+torchvision==0.16.0+cu121
+torchaudio==2.1.0+cu121
+torchdiffeq==0.2.3
+pandas==2.2.2
+numpy==1.26.4
+hydra-core==1.3.2
+omegaconf==2.3.0
+mlflow==2.14.1
+scikit-learn==1.4.2
+matplotlib==3.8.4
+seaborn==0.13.2
+optuna==3.6.1
+ax-platform==0.3.6
+botorch==0.9.5
+gpytorch==1.11

@@ -1,0 +1,6 @@
+name: node
+input_dim: 20
+state_dim: 32
+hidden: 64
+layers: 2
+output_dim: 2
