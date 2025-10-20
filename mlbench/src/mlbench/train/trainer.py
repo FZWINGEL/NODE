@@ -188,6 +188,47 @@ class Trainer:
         
         return metrics
 
+    def _validate_monitor_metric(self) -> None:
+        """Validate that the configured monitor metric will be available during training."""
+        monitor_key = getattr(self.config.early_stopping, 'monitor', 'val_loss')
+        
+        # Collect predictions across all batches (same logic as _evaluate)
+        self.model.eval()
+        all_predictions = []
+        all_targets = []
+        
+        with torch.no_grad():
+            for batch in self.val_loader:
+                batch = self._move_batch(batch)
+                outputs, traj = self.model(batch, t_eval=None)
+                
+                # Collect predictions and targets for metrics (same logic as _evaluate)
+                pred = outputs.get("soh_r", outputs.get("soh"))
+                target = batch.labels.get("soh_r", batch.labels.get("soh"))
+                
+                if pred is not None and target is not None:
+                    all_predictions.append(pred.cpu())
+                    all_targets.append(target.cpu())
+        
+        # Determine available metrics (same logic as _evaluate)
+        available_metrics = ["val_loss"]  # val_loss is always available
+        
+        if all_predictions and all_targets:
+            predictions = torch.cat(all_predictions, dim=0)
+            targets = torch.cat(all_targets, dim=0)
+            
+            # Compute comprehensive metrics to see what's available
+            from .metrics import compute_metrics
+            eval_metrics = compute_metrics(predictions, targets)
+            available_metrics.extend([f"val_{k}" for k in eval_metrics.keys()])
+        
+        if monitor_key not in available_metrics:
+            raise ValueError(
+                f"Monitor metric '{monitor_key}' is not available. "
+                f"Available metrics: {available_metrics}. "
+                f"Please check your early_stopping.monitor configuration."
+            )
+
     def fit(self) -> TrainerResult:
         """Fit the model with early stopping and artifact saving."""
         # Initialize early stopping
@@ -207,6 +248,9 @@ class Trainer:
             self.config.dataset.name,
         )
         
+        # Validate monitor metric configuration before training starts
+        self._validate_monitor_metric()
+        
         # Training loop
         for epoch in range(self.config.training.epochs):
             train_loss = self._train_one_epoch()
@@ -216,10 +260,13 @@ class Trainer:
             monitor_key = getattr(self.config.early_stopping, 'monitor', 'val_loss')
             monitor_metric = val_metrics.get(monitor_key)
             if monitor_metric is None:
-                # Fallback to val_loss if monitor_key not found
-                monitor_metric = val_metrics.get("val_loss")
-                if monitor_metric is None:
-                    raise ValueError(f"Neither monitor metric '{monitor_key}' nor 'val_loss' found in validation metrics: {list(val_metrics.keys())}")
+                # Fail fast if configured monitor metric doesn't exist - this indicates misconfiguration
+                available_metrics = list(val_metrics.keys())
+                raise ValueError(
+                    f"Monitor metric '{monitor_key}' not found in validation metrics. "
+                    f"Available metrics: {available_metrics}. "
+                    f"Please check your early_stopping.monitor configuration."
+                )
             
             # Step scheduler
             if self.scheduler:
