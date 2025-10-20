@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Sequence, Optional
 
@@ -68,7 +69,7 @@ class EarlyStopping:
         if improved:
             self.best_score = score
             self.counter = 0
-            self.best_model_state = model.state_dict().copy()
+            self.best_model_state = copy.deepcopy(model.state_dict())
         else:
             self.counter += 1
             
@@ -191,9 +192,9 @@ class Trainer:
         """Fit the model with early stopping and artifact saving."""
         # Initialize early stopping
         early_stopping = EarlyStopping(
-            patience=self.config.early_stopping.patience,
-            min_delta=self.config.early_stopping.min_delta,
-            mode=self.config.early_stopping.mode,
+            patience=getattr(self.config.early_stopping, 'patience', 5),
+            min_delta=getattr(self.config.early_stopping, 'min_delta', 0.0),
+            mode=getattr(self.config.early_stopping, 'mode', 'min'),
         )
         
         history: list[Dict[str, float]] = []
@@ -211,9 +212,17 @@ class Trainer:
             train_loss = self._train_one_epoch()
             val_metrics = self._evaluate()
             
+            # Get monitor metric once and reuse for both scheduler and early stopping
+            monitor_key = getattr(self.config.early_stopping, 'monitor', 'val_loss')
+            monitor_metric = val_metrics.get(monitor_key)
+            if monitor_metric is None:
+                # Fallback to val_loss if monitor_key not found
+                monitor_metric = val_metrics.get("val_loss")
+                if monitor_metric is None:
+                    raise ValueError(f"Neither monitor metric '{monitor_key}' nor 'val_loss' found in validation metrics: {list(val_metrics.keys())}")
+            
             # Step scheduler
             if self.scheduler:
-                monitor_metric = val_metrics.get(self.config.early_stopping.monitor, "val_loss")
                 self.scheduler.step(monitor_metric)
             
             # Prepare metrics
@@ -224,7 +233,6 @@ class Trainer:
             log_metrics_to_mlflow(metrics, step=epoch)
             
             # Check early stopping
-            monitor_metric = val_metrics.get(self.config.early_stopping.monitor, "val_loss")
             if early_stopping(monitor_metric, self.model):
                 print(f"Early stopping triggered at epoch {epoch}")
                 break

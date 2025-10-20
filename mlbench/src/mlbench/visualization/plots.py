@@ -229,7 +229,7 @@ def plot_battery_degradation(
     
     ax.set_xlabel("Cycle Number")
     ax.set_ylabel("State of Health (SoH)")
-    ax.set_title(title or f"Battery Degradation Curve{battery_id and f' - {battery_id}' or ''}")
+    ax.set_title(title or f"Battery Degradation Curve{f' - {battery_id}' if battery_id else ''}")
     ax.legend()
     ax.grid(True, alpha=0.3)
     
