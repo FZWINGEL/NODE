@@ -3,7 +3,7 @@ from typing import Any, Dict, Tuple
 import torch
 from torch import nn
 from torchdiffeq import odeint_adjoint as odeint
-from ...utils.registry import register
+from ...utils.registry import register_model
 from ..base import ForwardModel
 from ..shared.mlp import MLP
 
@@ -61,7 +61,16 @@ class _CharmDyn(nn.Module):
 		dt_dtau = 1.0 / chi
 		return torch.cat([dz_dtau, dt_dtau], dim=-1)
 
-@register("ude_charm")
+@register_model(
+    "ude_charm",
+    description="CHARM-inspired universal differential equation",
+    default_config={
+        "input_dim": 16,
+        "dim": 6,
+        "output_dim": 2,
+    },
+    tags=("ude", "physics"),
+)
 class CHARMUDE(ForwardModel):
 	def __init__(self, input_dim: int = 16, dim: int = 6, output_dim: int = 2):
 		super().__init__()

@@ -1,9 +1,35 @@
-﻿model: lstm
-train:
-  epochs: 10
-  lr: 1e-3
-  batch_size: 32
-  optimizer: adamw
+﻿model:
+  name: lstm
+  params:
+    input_dim: 16
+    hidden_dim: 64
+    num_layers: 2
+    output_dim: 2
 
-data:
+dataset:
   name: dummy
+  params:
+    batch_size: 32
+    val_split: 0.2
+    seed: 0
+
+optimizer:
+  name: adamw
+  params:
+    lr: 0.001
+
+scheduler:
+  name: reduce_on_plateau
+  params:
+    mode: min
+    factor: 0.5
+    patience: 3
+
+training:
+  epochs: 10
+  seed: 0
+  device: null
+  gradient_clip_norm: 1.0
+
+tags:
+  experiment: default

@@ -2,11 +2,21 @@
 from typing import Any, Dict, Tuple
 import torch
 from torch import nn
-from ...utils.registry import register
+from ...utils.registry import register_model
 from ..base import ForwardModel
 from ..shared.mlp import MLP
 
-@register("pcrnn")
+@register_model(
+    "pcrnn",
+    description="Physics-constrained RNN baseline",
+    default_config={
+        "input_dim": 16,
+        "hidden_dim": 64,
+        "num_layers": 2,
+        "output_dim": 2,
+    },
+    tags=("sequence", "physics"),
+)
 class PCRNNModel(ForwardModel):
 	def __init__(self, input_dim: int = 16, state_dim: int = 32, hidden: int = 64, layers: int = 2, output_dim: int = 2):
 		super().__init__()

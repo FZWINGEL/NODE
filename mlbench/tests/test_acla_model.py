@@ -5,10 +5,11 @@ Test script for ACLA model to verify it works correctly.
 
 import sys
 import torch
+import pytest
 from pathlib import Path
 
 # Add mlbench to path
-sys.path.insert(0, str(Path(__file__).parent / "mlbench" / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from mlbench.models import ACLAModel
 from mlbench.data.types import Batch
@@ -54,7 +55,7 @@ def test_acla_model():
     # Forward pass
     model.eval()
     with torch.no_grad():
-        outputs, traj = model(batch)
+        outputs, traj = model(batch, t_eval=None)
     
     print(f"Output shape: {outputs['soh_r'].shape}")
     print(f"Trajectory shape: {traj['state_traj'].shape}")
@@ -65,7 +66,7 @@ def test_acla_model():
     
     # Test gradient computation
     model.train()
-    outputs, traj = model(batch)
+    outputs, traj = model(batch, t_eval=None)
     loss = model.compute_loss(batch, outputs, traj)
     loss.backward()
     

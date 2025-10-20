@@ -3,7 +3,7 @@ from typing import Any, Dict, Tuple
 import torch
 from torch import nn
 from torchdiffeq import odeint_adjoint as odeint
-from ...utils.registry import register
+from ...utils.registry import register_model
 from ..base import ForwardModel
 
 
@@ -125,7 +125,21 @@ class ANODEDynamics(nn.Module):
         return torch.clamp(output, -10.0, 10.0)
 
 
-@register("acla")
+@register_model(
+    "acla",
+    description="ACLA (Attention-based CNN-LSTM-ANODE) model for battery SOH prediction",
+    default_config={
+        "input_dim": 20,
+        "attention_dim": 10,
+        "attention_width": 5,
+        "cnn_hidden_dim": 64,
+        "lstm_hidden_dim": 64,
+        "state_dim": 64,
+        "aug_dim": 20,
+        "output_dim": 2,
+    },
+    tags=("attention", "cnn", "lstm", "anode", "battery"),
+)
 class ACLAModel(ForwardModel):
     """
     ACLA (Attention-based CNN-LSTM-ANODE) model for battery SOH prediction.

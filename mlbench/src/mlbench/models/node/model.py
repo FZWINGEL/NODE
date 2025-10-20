@@ -3,7 +3,7 @@ from typing import Any, Dict, Tuple
 import torch
 from torch import nn
 from torchdiffeq import odeint_adjoint as odeint
-from ...utils.registry import register
+from ...utils.registry import register_model
 from ..base import ForwardModel
 from ..shared.mlp import MLP
 
@@ -15,7 +15,18 @@ class _Dyn(nn.Module):
 	def forward(self, t: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
 		return self.f(y)
 
-@register("node")
+@register_model(
+    "node",
+    description="Neural ODE with learned dynamics",
+    default_config={
+        "input_dim": 16,
+        "state_dim": 32,
+        "hidden": 64,
+        "layers": 2,
+        "output_dim": 2,
+    },
+    tags=("ode",),
+)
 class NODEModel(ForwardModel):
 	def __init__(self, input_dim: int = 16, state_dim: int = 32, hidden: int = 64, layers: int = 2, output_dim: int = 2):
 		super().__init__()

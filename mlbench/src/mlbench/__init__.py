@@ -1,4 +1,25 @@
-﻿from typing import Callable
-from .data.registry import register_dataset as register_dataset
-from .data.registry import get_dataset as get_dataset
-from .data.registry import available as available_datasets
+﻿"""mlbench package exports."""
+
+from .utils.registry import (
+    register_model,
+    get_model,
+    available_models,
+    model_entry,
+)
+from .data.registry import (
+    register_dataset,
+    get_dataset,
+    available_datasets,
+    dataset_entry,
+)
+
+__all__ = [
+    "register_model",
+    "get_model",
+    "available_models",
+    "model_entry",
+    "register_dataset",
+    "get_dataset",
+    "available_datasets",
+    "dataset_entry",
+]

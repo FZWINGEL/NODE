@@ -1,7 +1,14 @@
-﻿import argparse
+﻿from __future__ import annotations
+
+import argparse
 import os
 import torch
 import mlflow
+import json
+from pathlib import Path
+from typing import Any, Dict
+
+import yaml
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from ..utils.registry import get as get_model
@@ -10,6 +17,9 @@ from ..utils.seed import set_seed
 from ..data.registry import get_dataset
 # Import models to register them
 import mlbench.models
+
+from ..utils.config import ExperimentConfig, experiment_from_mapping
+from .trainer import Trainer
 
 
 def train_one_epoch(model, loader, opt, device):
@@ -75,7 +85,9 @@ def run(
 		builder_kwargs.update({"data_dir": data_dir, "window": window, "stride": stride})
 	elif data_name == "nasa_cc":
 		builder_kwargs.update({"data_dir": data_dir, "window": window, "stride": stride})
-	train_loader, val_loader = builder(**builder_kwargs)
+	datamodule = builder(**builder_kwargs)
+	train_loader = datamodule.train
+	val_loader = datamodule.val
 	with start_run(run_name=f"train_{model}", tags=tags, nested=nested_run):
 		mlflow.log_params({
 			"model": model,
@@ -110,49 +122,60 @@ def run(
 		mlflow.log_metric("best_val_mse", best_val)
 	return best_val
 
+def _load_config(path: Path) -> Dict[str, Any]:
+    with path.open("r", encoding="utf-8") as handle:
+        if path.suffix in {".yaml", ".yml"}:
+            return yaml.safe_load(handle)
+        if path.suffix == ".json":
+            return json.load(handle)
+        raise ValueError(f"Unsupported config file extension: {path.suffix}")
+
+
+def _parse_cli() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Train mlbench model from config")
+    parser.add_argument("--config", type=str, required=True, help="Path to YAML/JSON experiment config")
+    parser.add_argument(
+        "--override",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Override parameters (key=value pairs)",
+    )
+    return parser.parse_args()
+
+
+def _parse_overrides(pairs: list[str]) -> Dict[str, Any]:
+    overrides: Dict[str, Any] = {}
+    for item in pairs:
+        if "=" not in item:
+            raise ValueError(f"Invalid override '{item}', expected key=value format")
+        key, raw = item.split("=", 1)
+        overrides[key] = yaml.safe_load(raw)
+    return overrides
+
+
+def load_experiment(path: Path, overrides: Dict[str, Any] | None = None) -> ExperimentConfig:
+    data = _load_config(path)
+    if overrides:
+        for key, value in overrides.items():
+            section, _, param = key.partition(".")
+            if not param:
+                data[section] = value
+            else:
+                if section not in data or not isinstance(data[section], dict):
+                    data[section] = {}
+                data[section][param] = value
+    return experiment_from_mapping(data)
+
+
 def main():
-	p = argparse.ArgumentParser()
-	p.add_argument("--model", type=str, default="lstm")
-	p.add_argument("--epochs", type=int, default=10)
-	p.add_argument("--lr", type=float, default=1e-3)
-	p.add_argument("--batch_size", type=int, default=32)
-	p.add_argument("--seed", type=int, default=0)
-	p.add_argument("--data_name", type=str, default="dummy")
-	p.add_argument("--data_dir", type=str, default=None)
-	p.add_argument("--window", type=int, default=20)
-	p.add_argument("--stride", type=int, default=5)
-	p.add_argument("--val_split", type=float, default=0.2)
-	# Model-specific parameters
-	p.add_argument("--input_dim", type=int, default=None)
-	p.add_argument("--hidden_dim", type=int, default=None)
-	p.add_argument("--num_layers", type=int, default=None)
-	p.add_argument("--output_dim", type=int, default=None)
-	args = p.parse_args()
-	
-	# Build model kwargs from provided arguments
-	model_kwargs = {}
-	if args.input_dim is not None:
-		model_kwargs["input_dim"] = args.input_dim
-	if args.hidden_dim is not None:
-		model_kwargs["hidden_dim"] = args.hidden_dim
-	if args.num_layers is not None:
-		model_kwargs["num_layers"] = args.num_layers
-	if args.output_dim is not None:
-		model_kwargs["output_dim"] = args.output_dim
-	
-	run(
-		model=args.model,
-		epochs=args.epochs,
-		lr=args.lr,
-		batch_size=args.batch_size,
-		seed=args.seed,
-		data_name=args.data_name,
-		data_dir=args.data_dir,
-		window=args.window,
-		stride=args.stride,
-		val_split=args.val_split,
-		model_kwargs=model_kwargs if model_kwargs else None,
-	)
+    args = _parse_cli()
+    config_path = Path(args.config).resolve()
+    overrides = _parse_overrides(args.override) if args.override else None
+    exp_config = load_experiment(config_path, overrides)
+    trainer = Trainer(exp_config)
+    trainer.fit()
+
 
 if __name__ == "__main__":
-	main()
+    main()

@@ -3,7 +3,7 @@
 Lightweight research framework to train and tune sequence models (LSTM, NODE, ANODE, PCRNN, UDE-CHARM) for battery state-of-health (SoH) style regression on dummy and NASA PCoE data. Includes first-class experiment tracking via MLflow and built-in hyperparameter optimization (Optuna or Ax/Botorch).
 
 ### Features
-- Train via simple CLI: `python -m mlbench.train.run`
+- Train via config-driven CLI: `python -m mlbench.train.run --config <yaml>`
 - Models: `lstm`, `pcrnn`, `node`, `anode`, `ude_charm`
 - Datasets: `dummy` (synthetic), `nasa` (PCoE .mat files)
 - HPO backends: Optuna or Ax
@@ -31,15 +31,19 @@ This installs dependencies including PyTorch, torchdiffeq, MLflow, Optuna, Ax, B
 Each `.mat` should be one battery file (e.g., `B0005.mat`). The loader extracts discharge cycles, summarizes features, creates sliding windows, and predicts last-window SoH-like target.
 
 ### Training
-Run training for a chosen model and dataset:
+Experiments run from config files describing model, dataset, optimizer, and trainer settings.
 
 ```bash
-# General form
-python -m mlbench.train.run --model lstm --epochs 10 --lr 1e-3 --batch_size 32 --seed 0 --data_name dummy --val_split 0.2
-
-# Example: NASA dataset (windowed sequences)
-python -m mlbench.train.run --model node --epochs 20 --lr 1e-3 --batch_size 32 --data_name nasa --data_dir mlbench/data/NASA --window 20 --stride 5 --val_split 0.2
+python -m mlbench.train.run --config mlbench/configs/train/default.yaml
 ```
+
+Override individual fields inline using `section.param=value` pairs. Example: train NODE on NASA data while keeping other defaults:
+
+```bash
+python -m mlbench.train.run --config mlbench/configs/train/default.yaml --override model.name=node dataset.params.data_dir=mlbench/data/NASA
+```
+
+The trainer resolves implementations via registries, applies optimizer/scheduler defaults, logs to MLflow, and stores checkpoints under `artifacts/`.
 
 **Windows PowerShell**: If you get module not found errors, activate your virtual environment first:
 ```powershell
@@ -115,6 +119,23 @@ mlflow ui --backend-store-uri file:///$(pwd | sed 's/\\/\//g')/mlbench/mlruns
 ```
 
 On Windows PowerShell, you can also open `mlbench/mlruns` directly in a file browser; MLflow URIs are set automatically by the package.
+
+### Config and Registry Overview
+Model and dataset implementations self-register via decorators (`register_model`, `register_dataset`). Each entry exposes metadata and default params, enabling config-driven workflows.
+
+- Model configs live under `model.name` and `model.params`.
+- Dataset configs use `dataset.name` and `dataset.params`.
+- Optimizer, scheduler, and training settings live under their respective sections.
+
+Inspect available entries programmatically:
+
+```python
+from mlbench.utils.registry import available_models
+from mlbench.data.registry import available_datasets
+
+print(available_models().keys())
+print(available_datasets().keys())
+```
 
 ### Extending
 - Add a new model: implement a subclass of `mlbench.models.base.ForwardModel`, register with `@register("your_model")`, and ensure it returns `{"soh_r": tensor}` and a scalar MSE loss via `compute_loss`.
