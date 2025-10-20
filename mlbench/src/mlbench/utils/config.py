@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from dataclasses import asdict
 from typing import Any, Dict, Mapping, MutableMapping
 
 
@@ -41,12 +42,30 @@ class TrainingConfig:
 
 
 @dataclass(slots=True)
+class EarlyStoppingConfig:
+    monitor: str = "val_loss"
+    patience: int = 5
+    min_delta: float = 0.0
+    mode: str = "min"
+
+
+@dataclass(slots=True)
+class RunConfig:
+    name: str | None = None
+    tags: Dict[str, Any] = field(default_factory=dict)
+    save_dir: str = "artifacts"
+    log_level: str = "INFO"
+
+
+@dataclass(slots=True)
 class ExperimentConfig:
     model: ModelConfig
     dataset: DatasetConfig
     optimizer: OptimizerConfig = field(default_factory=OptimizerConfig)
     scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
     training: TrainingConfig = field(default_factory=TrainingConfig)
+    early_stopping: EarlyStoppingConfig = field(default_factory=EarlyStoppingConfig)
+    run: RunConfig = field(default_factory=RunConfig)
     tags: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -90,6 +109,8 @@ def experiment_from_mapping(data: Mapping[str, Any]) -> ExperimentConfig:
     optimizer_section = data.get("optimizer", {})
     scheduler_section = data.get("scheduler", {})
     training_section = data.get("training", {})
+    early_stopping_section = data.get("early_stopping", {})
+    run_section = data.get("run", {})
 
     optimizer_cfg = OptimizerConfig(
         name=str(optimizer_section.get("name", "adamw")),
@@ -108,6 +129,20 @@ def experiment_from_mapping(data: Mapping[str, Any]) -> ExperimentConfig:
         gradient_clip_norm=training_section.get("gradient_clip_norm", 1.0),
     )
 
+    early_stopping_cfg = EarlyStoppingConfig(
+        monitor=str(early_stopping_section.get("monitor", "val_loss")),
+        patience=int(early_stopping_section.get("patience", 5)),
+        min_delta=float(early_stopping_section.get("min_delta", 0.0)),
+        mode=str(early_stopping_section.get("mode", "min")),
+    )
+
+    run_cfg = RunConfig(
+        name=run_section.get("name"),
+        tags=dict(run_section.get("tags", {})) if isinstance(run_section.get("tags", {}), Mapping) else {},
+        save_dir=str(run_section.get("save_dir", "artifacts")),
+        log_level=str(run_section.get("log_level", "INFO")),
+    )
+
     tags_section = data.get("tags", {})
     tags = dict(tags_section) if isinstance(tags_section, Mapping) else {}
 
@@ -117,6 +152,8 @@ def experiment_from_mapping(data: Mapping[str, Any]) -> ExperimentConfig:
         optimizer=optimizer_cfg,
         scheduler=scheduler_cfg,
         training=training_cfg,
+        early_stopping=early_stopping_cfg,
+        run=run_cfg,
         tags=tags,
     )
 

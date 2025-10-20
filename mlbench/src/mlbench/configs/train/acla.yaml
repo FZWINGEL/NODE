@@ -1,0 +1,36 @@
+model:
+  name: acla
+  params:
+    # ACLA expects 1 + nv features (SoH_k + nv voltage-time samples). With nv=19 -> 20.
+    input_dim: 20
+
+dataset:
+  name: nasa_cc
+  params:
+    batch_size: 32
+    val_split: 0.2
+    seed: 0
+    data_dir: data/NASA
+    window: 20
+    stride: 5
+    nv: 19
+    v_min: 3.6
+    v_max: 4.2
+    tol_current: 0.1
+
+optimizer:
+  name: adamw
+  params:
+    lr: 0.01
+
+scheduler:
+  name: none
+  params: {}
+
+training:
+  epochs: 50
+  seed: 0
+  gradient_clip_norm: 1.0
+
+tags:
+  experiment: acla

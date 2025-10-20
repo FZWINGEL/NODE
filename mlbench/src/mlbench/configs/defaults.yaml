@@ -1,0 +1,43 @@
+# Global defaults for mlbench experiments
+model:
+  name: "lstm"
+  params: {}
+
+dataset:
+  name: "dummy"
+  params:
+    batch_size: 32
+    val_split: 0.2
+    seed: 0
+
+training:
+  epochs: 10
+  device: null  # auto-detect
+  gradient_clip_norm: 1.0
+  mixed_precision: false
+
+optimizer:
+  name: "adamw"
+  params:
+    lr: 1e-3
+    weight_decay: 1e-4
+
+scheduler:
+  name: "reduce_on_plateau"
+  params:
+    mode: "min"
+    factor: 0.5
+    patience: 3
+    min_lr: 1e-6
+
+early_stopping:
+  monitor: "val_mse"
+  patience: 5
+  min_delta: 0.0
+  mode: "min"
+
+run:
+  name: null  # auto-generate
+  tags: {}
+  save_dir: "artifacts"
+  log_level: "INFO"

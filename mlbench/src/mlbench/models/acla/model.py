@@ -234,5 +234,12 @@ class ACLAModel(ForwardModel):
         return {"soh_r": pred}, {"state_traj": zt}
     
     def compute_loss(self, batch, outputs, traj):
-        """Compute MSE loss for SOH prediction."""
-        return torch.nn.functional.mse_loss(outputs["soh_r"], batch.labels["soh_r"])
+        """Compute MSE loss for SOH prediction (first component only)."""
+        pred = outputs["soh_r"]
+        target = batch.labels["soh_r"]
+        # Use only the first dimension (SoH); ignore auxiliary component
+        if pred.dim() > 1:
+            pred = pred[:, 0]
+        if target.dim() > 1:
+            target = target[:, 0]
+        return torch.nn.functional.mse_loss(pred, target)

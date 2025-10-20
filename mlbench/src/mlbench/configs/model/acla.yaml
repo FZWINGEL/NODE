@@ -1,0 +1,11 @@
+model:
+  name: "acla"
+  params:
+    input_dim: 20  # SOH + 19 voltage time points for NASA dataset
+    attention_dim: 10
+    attention_width: 5
+    cnn_hidden_dim: 64
+    lstm_hidden_dim: 64
+    state_dim: 64
+    aug_dim: 20  # Augmented dimensions as specified in paper
+    output_dim: 2

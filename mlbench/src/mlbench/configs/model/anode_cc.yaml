@@ -1,0 +1,7 @@
+name: anode
+input_dim: 20
+state_dim: 32
+aug_dim: 8
+hidden: 64
+layers: 2
+output_dim: 2

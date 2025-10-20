@@ -1,0 +1,28 @@
+model:
+  name: acla
+  params:
+    input_dim: 16
+
+dataset:
+  name: dummy
+  params:
+    batch_size: 1
+    val_split: 0.2
+    seed: 0
+
+optimizer:
+  name: adamw
+  params:
+    lr: 0.01
+
+scheduler:
+  name: none
+  params: {}
+
+training:
+  epochs: 1000
+  seed: 0
+  gradient_clip_norm: 1.0
+
+tags:
+  experiment: acla
